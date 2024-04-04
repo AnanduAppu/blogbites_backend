@@ -5,6 +5,10 @@ const userControl = require('../controllers/userControll')
 router.route("/signupOtp").post(userControl.otpSignup);
 router.route("/usercreate").post(userControl.createUsers);
 router.route("/userinterst").post(userControl.interestedTopic);
+router.route("/userimage").post(userControl.AddImage);
+
+
+router.route("/useraccess").post(userControl.userAccess);
 
 router.route("/userlogin").post(userControl.loginUser);
 router.route("/authlogin").post(userControl.AuthLogin);

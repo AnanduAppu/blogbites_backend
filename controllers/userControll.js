@@ -114,7 +114,7 @@ const loginUser = tryCatch(async(req,res)=>{
 
   const id = userData.email
   console.log(id)
-  const aboutUser = jwt.sign(id,process.env.secreteKey)
+  const aboutUser = jwt.sign({id},process.env.secreteKey)
 
   res.cookie("userToken", aboutUser); 
 
@@ -163,7 +163,7 @@ const emailverify = tryCatch(async(req,res)=>{
   // Send the verification code to the user's email
     const otpToken = jwt.sign(verificationCode,process.env.secreteKey)
 
-    console.log(otpToken)
+    console.log("your otp is :- ",verificationCode)
     const mailOptions = {
       from: config.email.auth.user,
       to:  email,
@@ -211,12 +211,92 @@ console.log("we are completed user verification");
  
 })
 
+//profile image update
+const AddImage = tryCatch(async(req,res)=>{
+
+  const {email,imageUrl} = req.body
+ 
+  const existingUser = await userModel.findOne({email:email});
+
+  if(!existingUser  ){
+    return res.status(400).json({
+      message:"user not found",
+      success:false
+    })
+  }
+  
+  existingUser.profilePicture = imageUrl;
+  await existingUser.save();
+ 
+  return res.status(200).json({
+    message: "Profile picture updated successfully",
+    success: true
+  });
+
+})
+
+
+//send userdata when browser get reload 
+const userAccess = tryCatch(async(req,res)=>{
+  console.log("we are here")
+  const Useremail  = req.body.email;
+  console.log(Useremail)
+  const existingUser = await userModel.findOne({email:Useremail});
+  const token = req.cookies.userToken;
+
+  console.log(token)
+
+  if (!existingUser ) {
+    return res.status(401).json({ successful: false, error: "Unauthorized" });
+  }
+
+  console.log(existingUser)
+  res.status(200).json({
+    Data: existingUser,
+    successful: true
+  });
+
+})
+
+
+//*social media activities
+
+//like a post 
+const likeaPost = tryCatch(async(req,res)=>{
+  const {user,likedUser} = req.body
+
+  const existingUser = await userModel.findOnefindOne({email:likedUser.email})
+  const existingUser2 = await userModel.findOnefindOne({email:user.email})
+  if(!existingUser2 && !existingUser  ){
+    return res.status(400).json({
+      message:"user not found",
+      success:false
+    })
+  }
+
+  const addLike = await userModel.updateOne({ _id: user._id }, { $push: { likes: likedUser._id } });
+
+  const Likes = addLike.likes.length
+
+  res.status(200).json({ message: "postLiked",success:true, totalLikes:Likes });
+
+})
+
+
+//comment a post
+//save a post 
+
 
 module.exports={
     otpSignup,
     createUsers,
     interestedTopic,
+    AddImage,
     
+
+    userAccess , //take data in every reload
+
+
     loginUser,
     AuthLogin,
     emailverify,

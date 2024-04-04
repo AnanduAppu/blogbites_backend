@@ -28,18 +28,22 @@ const userSchema = mongoose.Schema({
     dob:{
         type: String,
     },
-    region:{
-        type: String,
-    },
     profilePicture: {
+        type:String,
+    },
+    backgroudWal: {
         type:String,
     },
     gender:{
         type:String,
         required:true
     },
+    region:{
+        type:String,
+        required:true
+    },
     interest:Array,
-    likes: Array,
+    likedBlogs: Array,
     your_blogs:Array,
     you_followed:Array,
     followed_back:Array,
@@ -51,8 +55,9 @@ const userSchema = mongoose.Schema({
         minlength: [4, "Password, at least needs 4 letters"],
         
     },
-   
-
+    
+},{
+    timestamps: true,
 });
 
 
