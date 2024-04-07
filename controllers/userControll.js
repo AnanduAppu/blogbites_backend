@@ -259,6 +259,31 @@ const userAccess = tryCatch(async(req,res)=>{
 })
 
 
+
+//posting the blog
+const blogPost = tryCatch(async(req,res)=>{
+  const {headline,blog,photo,email}= req.body
+console.log(req.body)
+  const existingUser = await userModel.findOne({email:email});
+
+  if (!existingUser ) {
+    return res.status(401).json({ successful: false, error: "Unauthorized" });
+  }
+
+  const yourBlog = await BlogModel.create({
+    author: existingUser._id,
+    title:headline,
+    description:blog,
+    image:photo,
+  })
+
+  existingUser.your_blogs.push(yourBlog._id);
+  await existingUser.save()
+  
+  res.status(200).json({successful:true,message:"blog created",data:yourBlog})
+})
+
+
 //*social media activities
 
 //like a post 
@@ -295,7 +320,7 @@ module.exports={
     
 
     userAccess , //take data in every reload
-
+    blogPost,//creating blog 
 
     loginUser,
     AuthLogin,

@@ -44,7 +44,10 @@ const userSchema = mongoose.Schema({
     },
     interest:Array,
     likedBlogs: Array,
-    your_blogs:Array,
+    your_blogs:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref:"Blog"
+    }],
     you_followed:Array,
     followed_back:Array,
     friend_req:Array,
