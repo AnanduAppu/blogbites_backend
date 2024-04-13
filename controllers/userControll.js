@@ -117,7 +117,7 @@ const loginUser = tryCatch(async(req,res)=>{
   const aboutUser = jwt.sign({id},process.env.secreteKey)
 
   res.cookie("userToken", aboutUser); 
-
+  console.log("we are in loginuser controller")
 
   res.status(200).json({message:"login successfull",success:true})
 })
@@ -211,6 +211,16 @@ console.log("we are completed user verification");
  
 })
 
+
+//logout the user 
+const logOut = tryCatch(async (req, res) => {
+ 
+  res.clearCookie("userToken")
+
+
+  res.status(200).json({ message: 'Logout successful',success:true });
+});
+
 //profile image update
 const AddImage = tryCatch(async(req,res)=>{
 
@@ -241,7 +251,7 @@ const userAccess = tryCatch(async(req,res)=>{
   console.log("we are here")
   const Useremail  = req.body.email;
   console.log(Useremail)
-  const existingUser = await userModel.findOne({email:Useremail});
+  const existingUser = await userModel.findOne({email:Useremail})
   const token = req.cookies.userToken;
 
   console.log(token)
@@ -259,10 +269,65 @@ const userAccess = tryCatch(async(req,res)=>{
 })
 
 
+//edit userdata
+const userEdit = tryCatch(async(req,res)=>{
+  const {fullName,username,birthday,email,location,userid}=req.body
+
+ const checkUser = await userModel.findOne({_id:userid})
+
+ if (!checkUser) {
+  return res.status(400).send("User does not exist");
+}
+
+  const updatedUser = await userModel.findByIdAndUpdate(
+    userid,
+    {
+      $set: {
+        firstName: fullName || checkUser.firstName,
+        username: username || checkUser.username,
+        email: email || checkUser.email,
+        dob: birthday || checkUser.dob,
+        region: location || checkUser.region
+        
+      },
+    },
+    { new: true, runValidators: true }
+  );
+
+  res.status(200).json({
+    message: "Successfully edited",
+    success: true
+  });
+
+})
+
+
+//user background image change 
+const walimage = tryCatch(async(req,res)=>{
+  const {email,imageUrl} = req.body
+ 
+  const existingUser = await userModel.findOne({email:email});
+
+  if(!existingUser  ){
+    return res.status(400).json({
+      message:"user not found",
+      success:false
+    })
+  }
+  
+  existingUser.backgroudWal = imageUrl;
+  await existingUser.save();
+ 
+  return res.status(200).json({
+    message: "image updated successfully",
+    success: true
+  });
+})
 
 //posting the blog
 const blogPost = tryCatch(async(req,res)=>{
-  const {headline,blog,photo,email}= req.body
+  console.log("anandu")
+  const {headline,blog,photo,email,selectedTopic}= req.body
 console.log(req.body)
   const existingUser = await userModel.findOne({email:email});
 
@@ -274,6 +339,7 @@ console.log(req.body)
     author: existingUser._id,
     title:headline,
     description:blog,
+    topic:selectedTopic,
     image:photo,
   })
 
@@ -283,6 +349,71 @@ console.log(req.body)
   res.status(200).json({successful:true,message:"blog created",data:yourBlog})
 })
 
+
+
+
+//list all blog posts
+const blogListing = tryCatch(async(req,res)=>{
+  const bloglist = await BlogModel.find().populate('author').populate("likes")
+
+  res.status(200).json({
+    blogs:bloglist,
+    success:true
+  })
+})
+
+
+//list all blogs of loged user
+const userBlogListing = tryCatch(async(req,res)=>{
+
+  const Useremail  = req.body.email;
+  console.log(Useremail)
+  const existingUser = await userModel.findOne({email:Useremail}).populate('your_blogs');
+
+
+  if (!existingUser ) {
+    return res.status(401).json({ successful: false, error: "Unauthorized" });
+  }
+
+  const myBlogs = existingUser.your_blogs
+
+
+  res.status(200).json({
+    blogdata:myBlogs,
+    successful: true
+  });
+})
+
+
+//loged user editing the blog
+const editBlog = tryCatch(async(req,res)=>{
+  const {imageEdit,headingEdit,descriptionEdit,blogid}=req.body
+
+ const checkBlog = await BlogModel.findOne({_id:blogid})
+
+ if (!checkBlog) {
+  return res.status(400).send("blog not ready");
+}
+
+  const updatedblog = await userModel.findByIdAndUpdate(
+    blogid,
+    {
+      $set: {
+        title: headingEdit || checkUser.firstName,
+        description: descriptionEdit || checkUser.username,
+        image: imageEdit || checkUser.email,
+        
+        
+      },
+    },
+    { new: true, runValidators: true }
+  );
+
+  res.status(200).json({
+    message: "Successfully edited",
+    success: true
+  });
+})
 
 //*social media activities
 
@@ -320,7 +451,12 @@ module.exports={
     
 
     userAccess , //take data in every reload
+    userEdit,//edit user data
     blogPost,//creating blog 
+    blogListing,//to listing every blogs
+    logOut,//user logout
+    walimage,//background image update
+    userBlogListing,// taking loged user blog data
 
     loginUser,
     AuthLogin,
