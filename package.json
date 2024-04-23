@@ -6,8 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "devStart": "nodemon index.js",
-    "build": "echo 'Building the project...'", 
-    "start": "node index.js"
+    "build": "echo 'Building the project...'",
+    "start": "nodemon index.js"
   },
   "author": "",
   "license": "ISC",
@@ -21,6 +21,7 @@
     "mongoose": "^8.2.1",
     "nodemailer": "^6.9.12",
     "nodemon": "^3.1.0",
+    "socket.io": "^4.7.5",
     "validator": "^13.11.0"
   }
 }

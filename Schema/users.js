@@ -43,14 +43,23 @@ const userSchema = mongoose.Schema({
         required:true
     },
     interest:Array,
-    likedBlogs: Array,
+    likedBlogs: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref:"Blog"
+    }],
     your_blogs:[{
         type: mongoose.Schema.Types.ObjectId,
         ref:"Blog"
     }],
-    you_followed:Array,
-    followed_back:Array,
-    friend_req:Array,
+    you_followed:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref:"userData"
+}],
+    followed:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref:"userData"
+    }],
+    
     saved_blogs:Array,
     password: {
         type: String,

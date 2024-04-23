@@ -5,6 +5,7 @@ const bycrypt =require("bcrypt");
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const config = require('../config/configure');
+const commentModel = require('../Schema/comments')
 
 
 const generatedOtp = () => {
@@ -391,11 +392,12 @@ const editBlog = tryCatch(async(req,res)=>{
 
  const checkBlog = await BlogModel.findOne({_id:blogid})
 
+
  if (!checkBlog) {
   return res.status(400).send("blog not ready");
 }
 
-  const updatedblog = await userModel.findByIdAndUpdate(
+  const updatedblog = await BlogModel.findByIdAndUpdate(
     blogid,
     {
       $set: {
@@ -418,28 +420,169 @@ const editBlog = tryCatch(async(req,res)=>{
 //*social media activities
 
 //like a post 
-const likeaPost = tryCatch(async(req,res)=>{
-  const {user,likedUser} = req.body
+const like_A_Post = tryCatch(async(req,res)=>{
 
-  const existingUser = await userModel.findOnefindOne({email:likedUser.email})
-  const existingUser2 = await userModel.findOnefindOne({email:user.email})
-  if(!existingUser2 && !existingUser  ){
-    return res.status(400).json({
-      message:"user not found",
-      success:false
-    })
+  const {userId, blogid} = req.body;
+
+    // Find the existing user
+    const existingUser = await userModel.findOne({_id:userId});
+    if (!existingUser) {
+      return res.status(400).json({
+        message: "User not found",
+        success: false
+      });
+    }
+
+    // Find the blog post
+    const blogPost = await BlogModel.findOne({_id:blogid});
+    if (!blogPost) {
+      return res.status(400).json({
+        message: "Blog post not found",
+        success: false
+      });
+    }
+   
+    // Check if the user's ID is already in the likes array
+    const isLiked = blogPost.likes.includes(existingUser._id);
+    
+    if (isLiked) {
+      // If user already liked, remove the user ID from the likes array
+      await BlogModel.updateOne({ _id: blogid }, { $pull: { likes: existingUser._id } });
+      await userModel.updateOne({ _id: userId }, { $pull: { likedBlogs: blogPost._id } });
+    } else {
+      // If user hasn't liked, add the user ID to the likes array
+      await BlogModel.updateOne({ _id: blogid }, { $push: { likes: existingUser._id } });
+      await userModel.updateOne({ _id: userId }, { $push: { likedBlogs: blogPost._id } });
+    }
+
+    res.status(200).json({ 
+      message: "Post liked",
+      success: true,
+     
+    });
+
+});
+
+
+//loged user viewing his/her liked blog details
+const LikedBlogUser = tryCatch(async(req,res)=>{
+
+  const userid = req.headers.userid; // Retrieve userid from headers
+  console.log("userid for liked blogs:", userid); // Log userid
+  const existingUser = await userModel.findOne({ _id: userid }).populate("likedBlogs");
+
+  if (!existingUser) {
+      return res.status(404).json({
+          message: "User not found",
+          success: false
+      });
   }
 
-  const addLike = await userModel.updateOne({ _id: user._id }, { $push: { likes: likedUser._id } });
+  const likedBlogs = existingUser.likedBlogs;
 
-  const Likes = addLike.likes.length
-
-  res.status(200).json({ message: "postLiked",success:true, totalLikes:Likes });
+  res.status(200).json({
+      success: true,
+      data: likedBlogs
+  });
 
 })
 
 
 //comment a post
+const post_A_comment = tryCatch(async(req,res)=>{
+  const {userId, blogid, comment} = req.body;
+  console.log( req.body)
+  const existUser = await userModel.findOne({_id:userId})
+  const existBlog = await BlogModel.findOne({_id:blogid})
+
+
+  if(!existUser || !existBlog){
+    return res.status(400).json({
+      message: "User or blog not found",
+      success:false
+    })
+  }
+ const addComment = await commentModel.create({
+  whichBlog: blogid,
+  commentPerson: userId,
+  comment: comment,
+ })
+
+ existBlog.comments.push(addComment._id);
+
+ await existBlog.save()
+
+ res.status(200).json({
+  message:"you commented",
+  success:true
+ })
+
+})
+
+//display the comments
+const showComments = tryCatch(async(req,res)=>{
+  const {blogid} = req.body;
+
+  const existComments = await commentModel.find({ whichBlog: blogid }).populate("commentPerson");
+ 
+  if(!existComments){
+    return res.status(200).json({
+      message:"no blog found",
+      success:false
+    })
+  }
+
+  res.status(200).json({
+    message:"fetch all comments",
+    success:true,
+    commentData:existComments
+  })
+})
+
+
+//follow another user
+const followAndUnfollow = tryCatch(async(req,res)=>{
+  
+  //another user here logeduserId following
+const {anotheruserId,logeduserId} = req.body
+
+const existAnotherUser= await userModel.findOne({_id:anotheruserId})
+const existLogedUser = await userModel.findOne({_id:logeduserId})
+
+
+if(!existAnotherUser || !existLogedUser){
+  return res.status(200).json({
+    message:"user not exist"
+  })
+}
+
+    // Check if the user's ID is already in the followed array
+    const isfollowed = existAnotherUser.followed.includes(existLogedUser._id);
+
+    
+    if (isfollowed) {
+      // If user already in anotheruser follwed array, remove the user ID to the follwed array
+      await userModel.updateOne({ _id: anotheruserId }, { $pull: { followed: existLogedUser._id } });
+      await userModel.updateOne({ _id: logeduserId }, { $pull: {you_followed: existAnotherUser._id } });
+
+      res.status(200).json({
+        message:"you unfollowed ",
+        success:true
+      })
+    } else {
+      // If user hasn't anotheruser follwed array, add the user ID to the follwed array
+     
+      await userModel.updateOne({ _id: anotheruserId }, { $push: { followed: existLogedUser._id } });
+      await userModel.updateOne({ _id: logeduserId }, { $push: {you_followed: existAnotherUser._id } });
+      res.status(200).json({
+        message:"you followed ",
+        success:true
+      })
+    }
+
+})
+
+
 //save a post 
 
 
@@ -452,11 +595,18 @@ module.exports={
 
     userAccess , //take data in every reload
     userEdit,//edit user data
+    editBlog,// edit out blog
     blogPost,//creating blog 
     blogListing,//to listing every blogs
     logOut,//user logout
     walimage,//background image update
     userBlogListing,// taking loged user blog data
+    like_A_Post,// like and unlike a post
+    post_A_comment,//post a new comment
+    showComments,//show all comments of respective blog
+    followAndUnfollow ,// follow and and unfollow a user
+    LikedBlogUser,//viewing liked blogs
+
 
     loginUser,
     AuthLogin,
