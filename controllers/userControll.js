@@ -467,7 +467,7 @@ const like_A_Post = tryCatch(async(req,res)=>{
 //loged user viewing his/her liked blog details
 const LikedBlogUser = tryCatch(async(req,res)=>{
 
-  const userid = req.headers.userid; // Retrieve userid from headers
+  const userid = req.query.id; // Retrieve userid from headers
   console.log("userid for liked blogs:", userid); // Log userid
   const existingUser = await userModel.findOne({ _id: userid }).populate("likedBlogs");
 
@@ -540,6 +540,36 @@ const showComments = tryCatch(async(req,res)=>{
 })
 
 
+
+
+//take another user profile 
+const fetchAnotherUser = tryCatch(async(req,res)=>{
+
+  const userid = req.query.id;
+  console.log(userid)
+
+const existUser = await userModel.findOne({_id:userid}).populate('your_blogs').populate('you_followed').populate('followed')
+
+if(!existUser){
+  return res.status(200).json({
+    message:"user not exist"
+  })
+}
+
+
+res.status(200).json({
+  success:true,
+  Data:existUser
+})
+
+
+
+})
+
+
+
+
+
 //follow another user
 const followAndUnfollow = tryCatch(async(req,res)=>{
   
@@ -564,19 +594,24 @@ if(!existAnotherUser || !existLogedUser){
       // If user already in anotheruser follwed array, remove the user ID to the follwed array
       await userModel.updateOne({ _id: anotheruserId }, { $pull: { followed: existLogedUser._id } });
       await userModel.updateOne({ _id: logeduserId }, { $pull: {you_followed: existAnotherUser._id } });
+      const userData= await userModel.findOne({_id:anotheruserId}).populate('your_blogs').populate('you_followed').populate('followed')
 
       res.status(200).json({
         message:"you unfollowed ",
-        success:true
+        success:true,
+        Data:userData
+        
       })
     } else {
       // If user hasn't anotheruser follwed array, add the user ID to the follwed array
      
       await userModel.updateOne({ _id: anotheruserId }, { $push: { followed: existLogedUser._id } });
       await userModel.updateOne({ _id: logeduserId }, { $push: {you_followed: existAnotherUser._id } });
+      const userData= await userModel.findOne({_id:anotheruserId}).populate('your_blogs').populate('you_followed').populate('followed')
       res.status(200).json({
         message:"you followed ",
-        success:true
+        success:true,
+        Data:userData
       })
     }
 
@@ -606,6 +641,7 @@ module.exports={
     showComments,//show all comments of respective blog
     followAndUnfollow ,// follow and and unfollow a user
     LikedBlogUser,//viewing liked blogs
+    fetchAnotherUser,// taking data of another users
 
 
     loginUser,
