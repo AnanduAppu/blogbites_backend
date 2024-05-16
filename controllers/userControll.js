@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const config = require('../config/configure');
 const commentModel = require('../Schema/comments')
+const mongoose = require('mongoose')
 
 
 const generatedOtp = () => {
@@ -89,6 +90,35 @@ const interestedTopic = tryCatch(async(req,res)=>{
  res.status(200).json({ message: "Interests added successfully", success: true });
 
 })
+
+
+
+//default profile image 
+const defaultImage = tryCatch(async(req,res)=>{
+
+
+
+  
+  const id = "6645c32e3bd65005c33f38e5"
+  // Now you can perform operations on the "Defaultimg" collection
+
+
+  const dataimg = await userModel.findById(id);
+
+  if (!dataimg) {
+    return res.status(400).json({
+      success:false,
+      messgae:"Data retrieval failed"
+    })
+  }
+  console.log( dataimg)
+ res.status(200).json({
+    success:true,
+    Data:dataimg
+  })
+})
+
+
 
 //*signup section ends here
 
@@ -347,7 +377,7 @@ console.log(req.body)
   existingUser.your_blogs.push(yourBlog._id);
   await existingUser.save()
   
-  res.status(200).json({successful:true,message:"blog created",data:yourBlog})
+  res.status(200).json({success:true,message:"blog created",data:yourBlog})
 })
 
 
@@ -356,9 +386,9 @@ console.log(req.body)
 //list all blog posts
 const blogListing = tryCatch(async(req,res)=>{
   const bloglist = await BlogModel.find().populate('author').populate("likes")
-
+  const result=bloglist.reverse()
   res.status(200).json({
-    blogs:bloglist,
+    blogs:result,
     success:true
   })
 })
@@ -626,6 +656,7 @@ module.exports={
     createUsers,
     interestedTopic,
     AddImage,
+    defaultImage,
     
 
     userAccess , //take data in every reload

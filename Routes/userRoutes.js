@@ -6,7 +6,7 @@ router.route("/signupOtp").post(userControl.otpSignup);
 router.route("/usercreate").post(userControl.createUsers);
 router.route("/userinterst").post(userControl.interestedTopic);
 router.route("/userimage").post(userControl.AddImage);
-
+router.route("/defaultimg").get(userControl.defaultImage);
 
 router.route("/userlogin").post(userControl.loginUser);
 router.route("/authlogin").post(userControl.AuthLogin);
