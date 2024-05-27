@@ -28,6 +28,8 @@ router.route("/postcomment").post(userControl.post_A_comment);//post a comment
 router.route("/showComment").post(userControl.showComments);// show all comment
 router.route("/followAndunfollow").put(userControl.followAndUnfollow);//follow and unflow a user
 router.route("/anotherUserProfile").get(userControl.fetchAnotherUser);// to view another user
+router.route("/searchFriends").get(userControl.serachFriend);// search a friend
+router.route("/saveBlog").put(userControl.Save_A_Blog);
 
 
 

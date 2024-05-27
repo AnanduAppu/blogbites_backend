@@ -60,7 +60,10 @@ const userSchema = mongoose.Schema({
         ref:"userData"
     }],
     
-    saved_blogs:Array,
+    saved_blogs:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref:"Blog"
+    }],
     password: {
         type: String,
         required: [true, "Please fill the password"],

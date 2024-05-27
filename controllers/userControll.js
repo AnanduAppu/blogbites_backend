@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const config = require('../config/configure');
 const commentModel = require('../Schema/comments')
-const mongoose = require('mongoose')
+
 
 
 const generatedOtp = () => {
@@ -37,8 +37,7 @@ const otpSignup= tryCatch(async(req,res)=>{
   
     // Send the verification code to the user's email
     const otpToken = jwt.sign(verificationCode,process.env.secreteKey)
-    console.log(userEmail)
-    console.log(otpToken)
+ 
     const mailOptions = {
       from: config.email.auth.user,
       to: userEmail,
@@ -80,7 +79,7 @@ const interestedTopic = tryCatch(async(req,res)=>{
   if(!userData){
     return res.status(400).json({message:"user not find",success:true})
   }
-  console.log(selectedInterests,email)
+
   await userModel.findOneAndUpdate(
     { email },
     { $push: { interest: { $each: selectedInterests } } },
@@ -138,17 +137,17 @@ const loginUser = tryCatch(async(req,res)=>{
   
   const passwordMatch = await bycrypt.compare(password, userData.password);
 
-  console.log("we are in loginuser controller")
+
   if (!passwordMatch) {
     return res.status(400).json({ message: "Incorrect password", success: false });
   }
 
   const id = userData.email
-  console.log(id)
+
   const aboutUser = jwt.sign({id},process.env.secreteKey)
 
   res.cookie("userToken", aboutUser); 
-  console.log("we are in loginuser controller")
+
 
   res.status(200).json({message:"login successfull",success:true})
 })
@@ -235,8 +234,7 @@ console.log("we are completed user verification");
       { $set: { password: hashedPassword } }
       );
 
-      console.log("we are here");
-
+     
       res.status(200).json({ message: "password changed successful",success:true });
   
  
@@ -279,19 +277,18 @@ const AddImage = tryCatch(async(req,res)=>{
 
 //send userdata when browser get reload 
 const userAccess = tryCatch(async(req,res)=>{
-  console.log("we are here")
+
   const Useremail  = req.body.email;
-  console.log(Useremail)
+
   const existingUser = await userModel.findOne({email:Useremail})
   const token = req.cookies.userToken;
 
-  console.log(token)
 
   if (!existingUser ) {
     return res.status(401).json({ successful: false, error: "Unauthorized" });
   }
 
-  console.log(existingUser)
+
   res.status(200).json({
     Data: existingUser,
     successful: true
@@ -357,9 +354,9 @@ const walimage = tryCatch(async(req,res)=>{
 
 //posting the blog
 const blogPost = tryCatch(async(req,res)=>{
-  console.log("anandu")
+
   const {headline,blog,photo,email,selectedTopic}= req.body
-console.log(req.body)
+
   const existingUser = await userModel.findOne({email:email});
 
   if (!existingUser ) {
@@ -385,20 +382,59 @@ console.log(req.body)
 
 //list all blog posts
 const blogListing = tryCatch(async(req,res)=>{
+
+
+  const value = req.query.q;
+
+
+
   const bloglist = await BlogModel.find().populate('author').populate("likes")
-  const result=bloglist.reverse()
-  res.status(200).json({
-    blogs:result,
-    success:true
-  })
+
+
+    const result=bloglist.reverse()
+    res.status(200).json({
+  
+      blogs:result,
+      success:true
+    })
+  
+
 })
+
+// const blogListing = tryCatch(async (req, res) => {
+//   // Extract page and limit from query parameters, defaulting to 1 and 4 if not provided
+//   const page = parseInt(req.query.page) || 1;
+//   const limit = parseInt(req.query.limit) || 4;
+
+//   // Calculate the number of documents to skip
+//   const skip = (page - 1) * limit;
+
+
+//     // Fetch the blogs with pagination
+//     const bloglist = await BlogModel.find()
+//       .populate('author')
+//       .populate("likes")
+//       .sort({ createdAt: -1 })  // Sort by creation date in descending order
+//       .skip(skip)
+//       .limit(limit);
+
+//     // Fetch total count for checking if there are more blogs
+//     const totalBlogs = await BlogModel.countDocuments();
+
+//     res.status(200).json({
+//       blogs: bloglist,
+//       success: true,
+//       hasMore: skip + bloglist.length < totalBlogs
+//     });
+
+// });
 
 
 //list all blogs of loged user
 const userBlogListing = tryCatch(async(req,res)=>{
 
   const Useremail  = req.body.email;
-  console.log(Useremail)
+  
   const existingUser = await userModel.findOne({email:Useremail}).populate('your_blogs');
 
 
@@ -494,10 +530,78 @@ const like_A_Post = tryCatch(async(req,res)=>{
 });
 
 
+
+//save a blog
+const Save_A_Blog = tryCatch(async (req, res) => {
+  const { userId, blogid } = req.body;
+
+  // Find the existing user
+  const existingUser = await userModel.findOne({ _id: userId });
+  if (!existingUser) {
+    return res.status(400).json({
+      message: "User not found",
+      success: false,
+    });
+  }
+
+  // Find the blog post
+  const blogPost = await BlogModel.findOne({ _id: blogid });
+  if (!blogPost) {
+    return res.status(400).json({
+      message: "Blog post not found",
+      success: false,
+    });
+  }
+
+  console.log('we are in saved blogs', userId);
+  // Check if the user's ID is already in the saved_blogs array
+  const isSaved = existingUser.saved_blogs.includes(blogPost._id);
+  console.log(existingUser);
+  if (isSaved) {
+    // If user already saved the blog, remove the blog ID from the saved_blogs array
+    await userModel.updateOne({ _id: userId }, { $pull: { saved_blogs: blogPost._id } });
+  } else {
+    // If user hasn't saved the blog, add the blog ID to the saved_blogs array
+    await userModel.updateOne({ _id: userId }, { $push: { saved_blogs: blogPost._id } });
+  }
+
+  res.status(200).json({
+    message: "Blog saved status updated",
+    success: true,
+  });
+});
+
+
+
+
+//Search a friend 
+
+const serachFriend = tryCatch(async(req,res)=>{
+  const searchTerm = req.query.q;
+
+  // Validate search term
+  if (!searchTerm) {
+    return res.status(400).json({ message: 'Search term is required' });
+  }
+
+  // Assuming you have a Friend model with a `name` field
+  const friends = await userModel.find({ 
+    username: { $regex: searchTerm, $options: 'i' } // Case insensitive search
+  });
+
+  res.status(200).json({friends})
+})
+
+
+
+
+
+
+
 //loged user viewing his/her liked blog details
 const LikedBlogUser = tryCatch(async(req,res)=>{
 
-  const userid = req.query.id; // Retrieve userid from headers
+  const userid = req.query.q; // Retrieve userid from headers
   console.log("userid for liked blogs:", userid); // Log userid
   const existingUser = await userModel.findOne({ _id: userid }).populate("likedBlogs");
 
@@ -510,9 +614,40 @@ const LikedBlogUser = tryCatch(async(req,res)=>{
 
   const likedBlogs = existingUser.likedBlogs;
 
+  
+
   res.status(200).json({
       success: true,
-      data: likedBlogs
+      Data: likedBlogs
+
+  });
+
+})
+
+
+
+//accesing the saved blogs
+const SavedBlogListing = tryCatch(async(req,res)=>{
+
+  const userid = req.query.q; // Retrieve userid from headers
+  console.log("userid for liked blogs:", userid); // Log userid
+  const existingUser = await userModel.findOne({ _id: userid }).populate("saved_blogs");
+
+  if (!existingUser) {
+      return res.status(404).json({
+          message: "User not found",
+          success: false
+      });
+  }
+
+  const savedBlogs = existingUser.saved_blogs;
+
+  
+
+  res.status(200).json({
+      success: true,
+      Data: savedBlogs
+
   });
 
 })
@@ -673,6 +808,10 @@ module.exports={
     followAndUnfollow ,// follow and and unfollow a user
     LikedBlogUser,//viewing liked blogs
     fetchAnotherUser,// taking data of another users
+    serachFriend,//search friends
+    Save_A_Blog,//blog saving
+    SavedBlogListing,//saved blog listing
+
 
 
     loginUser,
