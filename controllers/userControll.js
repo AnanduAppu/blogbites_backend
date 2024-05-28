@@ -280,8 +280,12 @@ const userAccess = tryCatch(async(req,res)=>{
 
   const Useremail  = req.body.email;
 
-  const existingUser = await userModel.findOne({email:Useremail})
+  const existingUser = await userModel
+  .findOne({ email: Useremail })
+  .populate('you_followed')
+  .populate('followed');
   const token = req.cookies.userToken;
+
 
 
   if (!existingUser ) {
@@ -601,9 +605,9 @@ const serachFriend = tryCatch(async(req,res)=>{
 //loged user viewing his/her liked blog details
 const LikedBlogUser = tryCatch(async(req,res)=>{
 
-  const userid = req.query.q; // Retrieve userid from headers
-  console.log("userid for liked blogs:", userid); // Log userid
-  const existingUser = await userModel.findOne({ _id: userid }).populate("likedBlogs");
+  const Useremail = req.query.q; // Retrieve userid from headers
+
+  const existingUser = await userModel.findOne({email:Useremail}).populate('likedBlogs');
 
   if (!existingUser) {
       return res.status(404).json({
@@ -614,7 +618,7 @@ const LikedBlogUser = tryCatch(async(req,res)=>{
 
   const likedBlogs = existingUser.likedBlogs;
 
-  
+
 
   res.status(200).json({
       success: true,
