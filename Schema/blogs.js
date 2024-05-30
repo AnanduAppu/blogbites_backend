@@ -22,6 +22,9 @@ const blogSchema = new mongoose.Schema({
     image: {
         type: String,
     },
+    
+    imageMul:Array,
+    
     likes: [{type: mongoose.Schema.Types.ObjectId,
         ref: 'userData', }],
         
