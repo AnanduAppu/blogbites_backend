@@ -629,6 +629,32 @@ const LikedBlogUser = tryCatch(async(req,res)=>{
 })
 
 
+const SavedBlogUser = tryCatch(async(req,res)=>{
+
+  const Useremail = req.query.q; // Retrieve userid from headers
+
+  const existingUser = await userModel.findOne({email:Useremail}).populate('saved_blogs');
+
+  if (!existingUser) {
+      return res.status(404).json({
+          message: "User not found",
+          success: false
+      });
+  }
+
+  const savedBlogs = existingUser.saved_blogs;
+
+
+
+  res.status(200).json({
+      success: true,
+      Data: savedBlogs
+
+  });
+
+})
+
+
 
 //accesing the saved blogs
 const SavedBlogListing = tryCatch(async(req,res)=>{
