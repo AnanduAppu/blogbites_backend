@@ -357,7 +357,7 @@ const walimage = tryCatch(async(req,res)=>{
 })
 
 //posting the blog
-const blogPost = tryCatch(async(req,res)=>{
+const CreateblogPost = tryCatch(async(req,res)=>{
 
   const {headline,blog,photo,email,selectedTopic}= req.body
 
@@ -388,19 +388,25 @@ const blogPost = tryCatch(async(req,res)=>{
 const blogListing = tryCatch(async(req,res)=>{
 
 
-  const value = req.query.q;
+  const topic = req.query.id;
 
+  let bloglist;
 
+  if (topic === 'all') {
+    bloglist = await BlogModel.find().populate('author').populate('likes');
+  } else {
 
-  const bloglist = await BlogModel.find().populate('author').populate("likes")
+   let top = topic.toLowerCase();
+    
 
+    bloglist = await BlogModel.find({ topic: new RegExp(`^${top}$`, 'i') }).populate('author').populate('likes');
+  }
 
-    const result=bloglist.reverse()
-    res.status(200).json({
-  
-      blogs:result,
-      success:true
-    })
+  const result = bloglist.reverse();
+  res.status(200).json({
+    blogs: result,
+    success: true,
+  });
   
 
 })
@@ -827,7 +833,7 @@ module.exports={
     userAccess , //take data in every reload
     userEdit,//edit user data
     editBlog,// edit out blog
-    blogPost,//creating blog 
+    CreateblogPost,//creating blog 
     blogListing,//to listing every blogs
     logOut,//user logout
     walimage,//background image update

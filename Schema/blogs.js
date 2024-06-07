@@ -19,11 +19,8 @@ const blogSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    image: {
-        type: String,
-    },
     
-    imageMul:Array,
+    image:Array,
     
     likes: [{type: mongoose.Schema.Types.ObjectId,
         ref: 'userData', }],

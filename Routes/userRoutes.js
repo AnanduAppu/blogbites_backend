@@ -16,7 +16,7 @@ router.route("/setnewpassword").post(userControl.setNewpassword);
 
 router.route("/useraccess").post(userControl.userAccess);//user access in every reload , the data of loged in user will retrive from database in everytime
 router.route("/userblogs").post(userControl.userBlogListing);//loged user blog details sending
-router.route("/blogcreate").post(userControl.blogPost);// to creating or post a new blog
+router.route("/blogcreate").post(userControl.CreateblogPost);// to creating or post a new blog
 router.route("/bloglist").get(userControl.blogListing);// to list out all blogs
 router.route("/logout").delete(userControl.logOut);//user log out the page
 router.route("/edituser").put(userControl.userEdit);// edit user details
