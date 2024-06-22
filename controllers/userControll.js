@@ -303,7 +303,7 @@ const userAccess = tryCatch(async(req,res)=>{
 
 //edit userdata
 const userEdit = tryCatch(async(req,res)=>{
-  const {fullName,username,birthday,email,location,userid}=req.body
+  const {fullName,username,birthday,location,userid}=req.body
 
  const checkUser = await userModel.findOne({_id:userid})
 
@@ -317,7 +317,6 @@ const userEdit = tryCatch(async(req,res)=>{
       $set: {
         firstName: fullName || checkUser.firstName,
         username: username || checkUser.username,
-        email: email || checkUser.email,
         dob: birthday || checkUser.dob,
         region: location || checkUser.region
         
@@ -373,6 +372,7 @@ const CreateblogPost = tryCatch(async(req,res)=>{
     description:blog,
     topic:selectedTopic,
     image:photo,
+    visibility:true
   })
 
   existingUser.your_blogs.push(yourBlog._id);
@@ -385,21 +385,47 @@ const CreateblogPost = tryCatch(async(req,res)=>{
 
 
 //list all blog posts
-const blogListing = tryCatch(async(req,res)=>{
+// const blogListing = tryCatch(async(req,res)=>{
 
 
+//   const topic = req.query.id;
+
+//   let bloglist;
+
+//   if (topic === 'all') {
+//     bloglist = await BlogModel.find().populate('author').populate('likes');
+//   } else {
+
+//    let top = topic.toLowerCase();
+    
+
+//     bloglist = await BlogModel.find({ topic: new RegExp(`^${top}$`, 'i') }).populate('author').populate('likes');
+//   }
+
+//   const result = bloglist.reverse();
+//   res.status(200).json({
+//     blogs: result,
+//     success: true,
+//   });
+  
+
+// })
+
+const blogListing = tryCatch(async (req, res) => {
   const topic = req.query.id;
 
   let bloglist;
 
   if (topic === 'all') {
-    bloglist = await BlogModel.find().populate('author').populate('likes');
+    bloglist = await BlogModel.find({ visibility: true })
+      .populate('author')
+      .populate('likes');
   } else {
+    let top = topic.toLowerCase();
 
-   let top = topic.toLowerCase();
-    
-
-    bloglist = await BlogModel.find({ topic: new RegExp(`^${top}$`, 'i') }).populate('author').populate('likes');
+    bloglist = await BlogModel.find({ topic: new RegExp(`^${top}$`, 'i'), visibility: true })
+      .populate('author')
+      .populate('likes');
   }
 
   const result = bloglist.reverse();
@@ -407,38 +433,37 @@ const blogListing = tryCatch(async(req,res)=>{
     blogs: result,
     success: true,
   });
-  
+});
 
-})
+// const blogListing = tryCatch(async(req,res)=>{
 
-// const blogListing = tryCatch(async (req, res) => {
-//   // Extract page and limit from query parameters, defaulting to 1 and 4 if not provided
+
+//   const topic = req.query.id;
 //   const page = parseInt(req.query.page) || 1;
-//   const limit = parseInt(req.query.limit) || 4;
+//   const limit = parseInt(req.query.limit) || 5;
 
-//   // Calculate the number of documents to skip
-//   const skip = (page - 1) * limit;
+//   let bloglist;
 
+//   if (topic === 'all') {
+//     bloglist = await BlogModel.find().populate('author').populate('likes')
+//                    .skip((page - 1) * limit)
+//                    .limit(limit);
+//   } else {
+//     let top = topic.toLowerCase();
+//     bloglist = await BlogModel.find({ topic: new RegExp(`^${top}$`, 'i') }).populate('author').populate('likes')
+//                    .skip((page - 1) * limit)
+//                    .limit(limit);
+//   }
 
-//     // Fetch the blogs with pagination
-//     const bloglist = await BlogModel.find()
-//       .populate('author')
-//       .populate("likes")
-//       .sort({ createdAt: -1 })  // Sort by creation date in descending order
-//       .skip(skip)
-//       .limit(limit);
+//   const result = bloglist.reverse();
+//   res.status(200).json({
+//     blogs: result,
+//     success: true,
+//     currentPage: page,
+//     totalPages: Math.ceil(await BlogModel.countDocuments() / limit)
+//   });
 
-//     // Fetch total count for checking if there are more blogs
-//     const totalBlogs = await BlogModel.countDocuments();
-
-//     res.status(200).json({
-//       blogs: bloglist,
-//       success: true,
-//       hasMore: skip + bloglist.length < totalBlogs
-//     });
-
-// });
-
+// })
 
 //list all blogs of loged user
 const userBlogListing = tryCatch(async(req,res)=>{
@@ -493,6 +518,62 @@ const editBlog = tryCatch(async(req,res)=>{
   });
 })
 
+
+
+//loged user deleting his blog
+const deleteMyBlog = tryCatch(async(req,res)=>{
+  const {blogid,userId}=req.body
+
+ const checkBlog = await BlogModel.findOne({_id:blogid})
+const existingUser = await userModel.findOne({_id:userId})
+
+ if (!checkBlog ) {
+  return res.status(400).send("blog not found");
+}
+if (!existingUser ) {
+  return res.status(400).send("user not found");
+}
+
+await BlogModel.deleteOne({ _id: blogid });
+await userModel.updateOne({ _id: userId }, { $pull: {  your_blogs: blogid } });
+
+
+  res.status(200).json({
+    message: "Successfully deleted",
+    success: true
+  });
+})
+
+
+
+//user making his blog public/private
+const isVisibility = tryCatch(async(req,res)=>{
+
+  const {userId,blogid,isPublic}=req.body
+  const checkBlog = await BlogModel.findOne({_id:blogid})
+  const existingUser = await userModel.findOne({_id:userId})
+  console.log("hellow form public",userId)
+  if (!checkBlog ) {
+    return res.status(400).send("blog not found");
+  }
+  if (!existingUser ) {
+    return res.status(400).send("user not found");
+  }
+
+    checkBlog.visibility = !isPublic;
+
+
+    await checkBlog.save();
+
+    res.status(200).json({
+  
+      success: true,
+      visbility: checkBlog.visibility 
+    });
+
+})
+
+
 //*social media activities
 
 //like a post 
@@ -538,6 +619,7 @@ const like_A_Post = tryCatch(async(req,res)=>{
     });
 
 });
+
 
 
 
@@ -613,7 +695,7 @@ const LikedBlogUser = tryCatch(async(req,res)=>{
 
   const Useremail = req.query.q; // Retrieve userid from headers
 
-  const existingUser = await userModel.findOne({email:Useremail}).populate('likedBlogs');
+  const existingUser = await userModel.findOne({email:Useremail}).populate('likedBlogs').populate('saved_blogs');;
 
   if (!existingUser) {
       return res.status(404).json({
@@ -623,12 +705,14 @@ const LikedBlogUser = tryCatch(async(req,res)=>{
   }
 
   const likedBlogs = existingUser.likedBlogs;
+  const savedBlogs = existingUser.saved_blogs;
 
 
 
   res.status(200).json({
       success: true,
-      Data: likedBlogs
+      LData: likedBlogs,
+      SData: savedBlogs
 
   });
 
@@ -843,10 +927,13 @@ module.exports={
     showComments,//show all comments of respective blog
     followAndUnfollow ,// follow and and unfollow a user
     LikedBlogUser,//viewing liked blogs
+    SavedBlogUser,//viewing saved blogs
     fetchAnotherUser,// taking data of another users
     serachFriend,//search friends
     Save_A_Blog,//blog saving
     SavedBlogListing,//saved blog listing
+    isVisibility ,// making your public/private
+    deleteMyBlog,// delete the blog from user profile
 
 
 

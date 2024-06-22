@@ -24,13 +24,15 @@ router.route("/editBlog").put(userControl.editBlog);//edituser blog
 router.route("/updateWalimg").put(userControl.walimage);//update background image
 router.route("/like").put(userControl.like_A_Post);// add like and dislike same time
 router.route("/likedblog").get(userControl.LikedBlogUser);// viewing liked bloged 
+router.route("/savedblogs").get(userControl.SavedBlogUser);// viewing liked bloged 
 router.route("/postcomment").post(userControl.post_A_comment);//post a comment
 router.route("/showComment").post(userControl.showComments);// show all comment
 router.route("/followAndunfollow").put(userControl.followAndUnfollow);//follow and unflow a user
 router.route("/anotherUserProfile").get(userControl.fetchAnotherUser);// to view another user
 router.route("/searchFriends").get(userControl.serachFriend);// search a friend
 router.route("/saveBlog").put(userControl.Save_A_Blog);
-
+router.route("/publicOrPrivate").post(userControl.isVisibility);
+router.route("/deleteBlog").delete(userControl.deleteMyBlog);// deleting user blog if he want
 
 
 

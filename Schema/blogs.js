@@ -27,6 +27,7 @@ const blogSchema = new mongoose.Schema({
         
     comments:[{type: mongoose.Schema.Types.ObjectId,
         ref: 'comments', }],
+    visibility:Boolean
 }, {
     timestamps: true,
 });
