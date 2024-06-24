@@ -385,21 +385,23 @@ const CreateblogPost = tryCatch(async(req,res)=>{
 
 
 //list all blog posts
-// const blogListing = tryCatch(async(req,res)=>{
 
 
+// const blogListing = tryCatch(async (req, res) => {
 //   const topic = req.query.id;
 
 //   let bloglist;
 
 //   if (topic === 'all') {
-//     bloglist = await BlogModel.find().populate('author').populate('likes');
+//     bloglist = await BlogModel.find({ visibility: true })
+//       .populate('author')
+//       .populate('likes');
 //   } else {
+//     let top = topic.toLowerCase();
 
-//    let top = topic.toLowerCase();
-    
-
-//     bloglist = await BlogModel.find({ topic: new RegExp(`^${top}$`, 'i') }).populate('author').populate('likes');
+//     bloglist = await BlogModel.find({ topic: new RegExp(`^${top}$`, 'i'), visibility: true })
+//       .populate('author')
+//       .populate('likes');
 //   }
 
 //   const result = bloglist.reverse();
@@ -407,63 +409,46 @@ const CreateblogPost = tryCatch(async(req,res)=>{
 //     blogs: result,
 //     success: true,
 //   });
-  
+// });
 
-// })
 
 const blogListing = tryCatch(async (req, res) => {
   const topic = req.query.id;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 4;
+  const skip = (page - 1) * limit;
 
   let bloglist;
 
   if (topic === 'all') {
     bloglist = await BlogModel.find({ visibility: true })
       .populate('author')
-      .populate('likes');
+      .populate('likes')
+      
+      .limit(limit*page);
   } else {
     let top = topic.toLowerCase();
 
     bloglist = await BlogModel.find({ topic: new RegExp(`^${top}$`, 'i'), visibility: true })
       .populate('author')
-      .populate('likes');
+      .populate('likes')
+ 
+      .limit(limit*page);
   }
 
+  // Reverse the result if needed (although with pagination, the order should be managed by the query)
   const result = bloglist.reverse();
+
   res.status(200).json({
     blogs: result,
     success: true,
+    page: page,
+    limit: limit
   });
 });
 
-// const blogListing = tryCatch(async(req,res)=>{
 
 
-//   const topic = req.query.id;
-//   const page = parseInt(req.query.page) || 1;
-//   const limit = parseInt(req.query.limit) || 5;
-
-//   let bloglist;
-
-//   if (topic === 'all') {
-//     bloglist = await BlogModel.find().populate('author').populate('likes')
-//                    .skip((page - 1) * limit)
-//                    .limit(limit);
-//   } else {
-//     let top = topic.toLowerCase();
-//     bloglist = await BlogModel.find({ topic: new RegExp(`^${top}$`, 'i') }).populate('author').populate('likes')
-//                    .skip((page - 1) * limit)
-//                    .limit(limit);
-//   }
-
-//   const result = bloglist.reverse();
-//   res.status(200).json({
-//     blogs: result,
-//     success: true,
-//     currentPage: page,
-//     totalPages: Math.ceil(await BlogModel.countDocuments() / limit)
-//   });
-
-// })
 
 //list all blogs of loged user
 const userBlogListing = tryCatch(async(req,res)=>{
@@ -552,7 +537,7 @@ const isVisibility = tryCatch(async(req,res)=>{
   const {userId,blogid,isPublic}=req.body
   const checkBlog = await BlogModel.findOne({_id:blogid})
   const existingUser = await userModel.findOne({_id:userId})
-  console.log("hellow form public",userId)
+
   if (!checkBlog ) {
     return res.status(400).send("blog not found");
   }
