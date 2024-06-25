@@ -416,7 +416,6 @@ const blogListing = tryCatch(async (req, res) => {
   const topic = req.query.id;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 4;
-  const skip = (page - 1) * limit;
 
   let bloglist;
 
@@ -424,19 +423,18 @@ const blogListing = tryCatch(async (req, res) => {
     bloglist = await BlogModel.find({ visibility: true })
       .populate('author')
       .populate('likes')
-      
-      .limit(limit*page);
+      .skip((page - 1) * limit)
+      .limit(limit);
   } else {
     let top = topic.toLowerCase();
 
     bloglist = await BlogModel.find({ topic: new RegExp(`^${top}$`, 'i'), visibility: true })
       .populate('author')
       .populate('likes')
- 
-      .limit(limit*page);
+      .skip((page - 1) * limit)
+      .limit(limit);
   }
 
-  // Reverse the result if needed (although with pagination, the order should be managed by the query)
   const result = bloglist.reverse();
 
   res.status(200).json({
@@ -446,6 +444,7 @@ const blogListing = tryCatch(async (req, res) => {
     limit: limit
   });
 });
+
 
 
 
@@ -816,7 +815,6 @@ const showComments = tryCatch(async(req,res)=>{
 const fetchAnotherUser = tryCatch(async(req,res)=>{
 
   const userid = req.query.id;
-  console.log(userid)
 
 const existUser = await userModel.findOne({_id:userid}).populate('your_blogs').populate('you_followed').populate('followed')
 
@@ -826,16 +824,34 @@ if(!existUser){
   })
 }
 
+res.status(200).json({
+  success:true,
+  Data:existUser,
+ 
+})
+})
+
+
+// fetch another user blogs
+
+const fetchAnotherUserBlogs = tryCatch(async(req,res)=>{
+
+const userid = req.query.id;
+
+const existUser = await userModel.findOne({_id:userid})
+const UserBlogs = await BlogModel.find({author:userid}).populate('likes')
+if(!existUser){
+  return res.status(200).json({
+    message:"user not exist"
+  })
+}
 
 res.status(200).json({
   success:true,
-  Data:existUser
+  Data:UserBlogs,
+ 
 })
-
-
-
 })
-
 
 
 
