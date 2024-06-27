@@ -356,30 +356,38 @@ const walimage = tryCatch(async(req,res)=>{
 })
 
 //posting the blog
-const CreateblogPost = tryCatch(async(req,res)=>{
+const CreateblogPost = tryCatch(async (req, res) => {
+  console.log("Received request to create blog");
 
-  const {headline,blog,photo,email,selectedTopic}= req.body
+  const { headline, blog, photo, email, selectedTopic,subParagraph1,subParagraph2 } = req.body;
 
-  const existingUser = await userModel.findOne({email:email});
+ 
+    const existingUser = await userModel.findOne({ email });
 
-  if (!existingUser ) {
-    return res.status(401).json({ successful: false, error: "Unauthorized" });
-  }
+    if (!existingUser) {
+      console.log("Unauthorized access attempt with email:", email);
+      return res.status(401).json({ successful: false, error: "Unauthorized" });
+    }
 
-  const yourBlog = await BlogModel.create({
-    author: existingUser._id,
-    title:headline,
-    description:blog,
-    topic:selectedTopic,
-    image:photo,
-    visibility:true
-  })
+    const yourBlog = await BlogModel.create({
+      author: existingUser._id,
+      title: headline,
+      description: blog,
+      topic: selectedTopic,
+      image: photo,
+      descriptionPara1:subParagraph1,
+      descriptionPara2:subParagraph2,
+      visibility:true
+    });
 
-  existingUser.your_blogs.push(yourBlog._id);
-  await existingUser.save()
+    existingUser.your_blogs.push(yourBlog._id);
+    await existingUser.save();
+
+    res.status(200).json({ success: true, message: "Blog created", data: yourBlog });
   
-  res.status(200).json({success:true,message:"blog created",data:yourBlog})
-})
+});
+
+
 
 
 
@@ -447,6 +455,26 @@ const blogListing = tryCatch(async (req, res) => {
 
 
 
+// showing particular blog which we reading 
+const selectedBlog = tryCatch(async(req,res)=>{
+console.log("hellow from selelcted blogs")
+  const UserID  = req.query.userId;
+  const BlogId = req.query.blogId;
+  
+  const existingUser = await userModel.findOne({_id:UserID})
+  const existingBlog = await BlogModel.findOne({_id:BlogId})
+
+
+  if (!existingUser ) {
+    return res.status(401).json({ successful: false, error: "Unauthorized" });
+  }
+
+
+  res.status(200).json({
+    blogdata:existingBlog,
+    successful: true
+  });
+})
 
 
 //list all blogs of loged user
@@ -816,7 +844,7 @@ const fetchAnotherUser = tryCatch(async(req,res)=>{
 
   const userid = req.query.id;
 
-const existUser = await userModel.findOne({_id:userid}).populate('your_blogs').populate('you_followed').populate('followed')
+const existUser = await userModel.findOne({_id:userid}).populate('you_followed').populate('followed')
 
 if(!existUser){
   return res.status(200).json({
@@ -838,13 +866,17 @@ const fetchAnotherUserBlogs = tryCatch(async(req,res)=>{
 
 const userid = req.query.id;
 
+
+
 const existUser = await userModel.findOne({_id:userid})
-const UserBlogs = await BlogModel.find({author:userid}).populate('likes')
+const UserBlogs = await BlogModel.find({author:userid,visibility: true}).populate('likes')
 if(!existUser){
   return res.status(200).json({
     message:"user not exist"
   })
-}
+};
+
+
 
 res.status(200).json({
   success:true,
@@ -923,6 +955,7 @@ module.exports={
     logOut,//user logout
     walimage,//background image update
     userBlogListing,// taking loged user blog data
+    selectedBlog,// viewing particular blog 
     like_A_Post,// like and unlike a post
     post_A_comment,//post a new comment
     showComments,//show all comments of respective blog
@@ -930,6 +963,7 @@ module.exports={
     LikedBlogUser,//viewing liked blogs
     SavedBlogUser,//viewing saved blogs
     fetchAnotherUser,// taking data of another users
+    fetchAnotherUserBlogs,// takw another user blogs
     serachFriend,//search friends
     Save_A_Blog,//blog saving
     SavedBlogListing,//saved blog listing

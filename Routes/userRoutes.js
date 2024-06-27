@@ -16,8 +16,9 @@ router.route("/setnewpassword").post(userControl.setNewpassword);
 
 router.route("/useraccess").post(userControl.userAccess);//user access in every reload , the data of loged in user will retrive from database in everytime
 router.route("/userblogs").post(userControl.userBlogListing);//loged user blog details sending
-router.route("/blogcreate").post(userControl.CreateblogPost);// to creating or post a new blog
+router.route("/blogcreating").post(userControl.CreateblogPost);// to creating or post a new blog
 router.route("/bloglist").get(userControl.blogListing);// to list out all blogs
+router.route("/selectedBlog").get(userControl.selectedBlog);
 router.route("/logout").delete(userControl.logOut);//user log out the page
 router.route("/edituser").put(userControl.userEdit);// edit user details
 router.route("/editBlog").put(userControl.editBlog);//edituser blog
@@ -29,6 +30,7 @@ router.route("/postcomment").post(userControl.post_A_comment);//post a comment
 router.route("/showComment").post(userControl.showComments);// show all comment
 router.route("/followAndunfollow").put(userControl.followAndUnfollow);//follow and unflow a user
 router.route("/anotherUserProfile").get(userControl.fetchAnotherUser);// to view another user
+router.route("/anotherUserBlogs").get(userControl.fetchAnotherUserBlogs);// to view another user blogs
 router.route("/searchFriends").get(userControl.serachFriend);// search a friend
 router.route("/saveBlog").put(userControl.Save_A_Blog);
 router.route("/publicOrPrivate").post(userControl.isVisibility);
