@@ -357,18 +357,18 @@ const walimage = tryCatch(async(req,res)=>{
 
 //posting the blog
 const CreateblogPost = tryCatch(async (req, res) => {
-  console.log("Received request to create blog");
+
 
   const { headline, blog, photo, email, selectedTopic,subParagraph1,subParagraph2 } = req.body;
 
- 
+
     const existingUser = await userModel.findOne({ email });
 
     if (!existingUser) {
       console.log("Unauthorized access attempt with email:", email);
       return res.status(401).json({ successful: false, error: "Unauthorized" });
     }
-
+ 
     const yourBlog = await BlogModel.create({
       author: existingUser._id,
       title: headline,
@@ -379,7 +379,7 @@ const CreateblogPost = tryCatch(async (req, res) => {
       descriptionPara2:subParagraph2,
       visibility:true
     });
-
+    
     existingUser.your_blogs.push(yourBlog._id);
     await existingUser.save();
 
@@ -457,18 +457,18 @@ const blogListing = tryCatch(async (req, res) => {
 
 // showing particular blog which we reading 
 const selectedBlog = tryCatch(async(req,res)=>{
-console.log("hellow from selelcted blogs")
-  const UserID  = req.query.userId;
+
+
   const BlogId = req.query.blogId;
   
-  const existingUser = await userModel.findOne({_id:UserID})
+ 
   const existingBlog = await BlogModel.findOne({_id:BlogId})
 
 
-  if (!existingUser ) {
+  if (! existingBlog) {
     return res.status(401).json({ successful: false, error: "Unauthorized" });
   }
-
+  
 
   res.status(200).json({
     blogdata:existingBlog,
@@ -500,25 +500,24 @@ const userBlogListing = tryCatch(async(req,res)=>{
 
 
 //loged user editing the blog
-const editBlog = tryCatch(async(req,res)=>{
-  const {imageEdit,headingEdit,descriptionEdit,blogid}=req.body
+const editBlog = tryCatch(async (req, res) => {
+  const { imageEdit, headingEdit, descriptionEdit, blogid, descriptionEdit1, descriptionEdit2 } = req.body;
 
- const checkBlog = await BlogModel.findOne({_id:blogid})
+  const checkBlog = await BlogModel.findOne({ _id: blogid });
 
+  if (!checkBlog) {
+    return res.status(400).send("Blog not found");
+  }
 
- if (!checkBlog) {
-  return res.status(400).send("blog not ready");
-}
-
-  const updatedblog = await BlogModel.findByIdAndUpdate(
+  const updatedBlog = await BlogModel.findByIdAndUpdate(
     blogid,
     {
       $set: {
-        title: headingEdit || checkUser.firstName,
-        description: descriptionEdit || checkUser.username,
-        image: imageEdit || checkUser.email,
-        
-        
+        title: headingEdit || checkBlog.title,
+        description: descriptionEdit || checkBlog.description,
+        image: imageEdit || checkBlog.image,
+        descriptionPara1: descriptionEdit1 !== undefined ? descriptionEdit1 : (checkBlog.descriptionPara1 || ''),
+        descriptionPara2: descriptionEdit2 !== undefined ? descriptionEdit2 : (checkBlog.descriptionPara2 || '')
       },
     },
     { new: true, runValidators: true }
@@ -528,7 +527,7 @@ const editBlog = tryCatch(async(req,res)=>{
     message: "Successfully edited",
     success: true
   });
-})
+});
 
 
 

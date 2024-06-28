@@ -18,12 +18,12 @@ const blogSchema = new mongoose.Schema({
     
     descriptionPara1: {
         type: String,
-        required: true
+       
     }
     ,
     descriptionPara2: {
         type: String,
-        required: true
+       
     },
     topic:{
         type: String,
