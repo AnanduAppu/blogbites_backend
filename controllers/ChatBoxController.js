@@ -1,74 +1,76 @@
-const userModel = require('../Schema/users')
-const ChatModel = require('../Schema/ChatRoom')
-const { tryCatch } = require("../middleWares/trycatch");
 const express = require('express');
 const http = require('http');
-const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 const socketIO = require('socket.io');
-
-
-
+const userModel = require('../Schema/users');
+const ChatModel = require('../Schema/ChatRoom');
+const MessageModel = require('../Schema/messageSchema');
+const { tryCatch } = require("../middleWares/trycatch");
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
-      origin: "http://localhost:5173", // Adjust to your React app's URL
-      methods: ["GET", "POST"]
+    origin: "http://localhost:5173", // Adjust to your React app's URL
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+    credentials: true // Allow credentials
   }
 });
 
-
-const listingFriends = tryCatch(async(req,res)=>{
-
-    const userid = req.query.id;
-
-    const checkUser = await userModel.findOne({_id:userid}).populate('followed')
-    
- if (!checkUser) {
+const listingFriends = tryCatch(async(req, res) => {
+  const userid = req.query.id;
+  const checkUser = await userModel.findOne({_id:userid}).populate('followed');
+  if (!checkUser) {
     return res.status(400).send("User does not exist");
   }
   res.status(200).json({
-    Data: checkUser.followed ,
+    Data: checkUser.followed,
     success: true
   });
-
-})
+});
 
 const creatingChatRoom = tryCatch(async (req, res) => {
   const { userid, anotherUserId } = req.body;
-
-  // Check if a chat room already exists between these users
   let chatRoom = await ChatModel.findOne({
     isGroup: false,
     users: { $all: [userid, anotherUserId] }
-  }).populate('latestMessage');
+  });
 
   if (chatRoom) {
-    // Chat room exists, return the latest message
+    const token = jwt.sign({ chatRoomId: chatRoom._id }, process.env.secreteKey, { expiresIn: '1h' });
+    res.cookie('chatRoomId', token, { httpOnly: true });
     res.status(200).json({
       message: 'Chat room already exists',
-      latestMessage: chatRoom.latestMessage,
+      success: true,
+      chatRoom: chatRoom
     });
   } else {
-    // Chat room does not exist, create a new one
     const newChatRoom = await ChatModel.create({
       users: [userid, anotherUserId],
       isGroup: false,
     });
-
-
+    const token = jwt.sign({ chatRoomId: newChatRoom._id }, process.env.secreteKey, { expiresIn: '1h' });
+    res.cookie('chatRoomId', token, { httpOnly: true });
     res.status(201).json({
       message: 'New chat room created',
-      chatRoom: newChatRoom,
-  
+      success: true,
+      chatRoom: newChatRoom
     });
   }
 });
 
-
 const sendMessage = tryCatch(async (req, res) => {
-  const { chatId, senderId, messageText } = req.body;
+  const { senderId, messageText } = req.body;
+console.log(senderId,messageText)
+  const token = req.cookies.chatRoomId;
+  if (!token) {
+    return res.status(401).json({ message: 'No chat room ID found in cookies' });
+  }
+
+  // Verify the token and extract chatId
+  const decoded = jwt.verify(token, process.env.secreteKey);
+  const chatId = decoded.chatRoomId;
 
   const newMessage = await MessageModel.create({
     sender: senderId,
@@ -81,45 +83,46 @@ const sendMessage = tryCatch(async (req, res) => {
     latestMessage: newMessage._id
   });
 
+  // Populate the sender's information
+  const populatedMessage = await newMessage.populate('sender');
+
   // Emit the message to the users in the chat room
-  const chatRoom = await ChatModel.findById(chatId).populate('users');
-  chatRoom.users.forEach(user => {
-    io.to(user._id.toString()).emit('newMessage', newMessage);
-  });
+  io.to(chatId).emit('newMessage', populatedMessage);
 
   res.status(201).json({
     message: 'Message sent successfully',
-    newMessage
+    newMessage: populatedMessage
   });
 });
+
 
 const getMessagesForChat = tryCatch(async (req, res) => {
-  const { chatId } = req.params;
-
+  const token = req.cookies.chatRoomId;
+  if (!token) {
+    return res.status(401).json({ message: 'No chat room ID found in cookies' });
+  }
+  const decoded = jwt.verify(token, process.env.secreteKey);
+  const chatId = decoded.chatRoomId;
   const messages = await MessageModel.find({ chatId }).populate('sender');
-
   res.status(200).json({
     messages,
+    chatId
   });
 });
 
-module.exports={
-
-    listingFriends,
-    creatingChatRoom ,
-    sendMessage,
-    getMessagesForChat
-    
-}
-
+module.exports = {
+  listingFriends,
+  creatingChatRoom,
+  sendMessage,
+  getMessagesForChat
+};
 
 io.on('connection', (socket) => {
   console.log('A user connected');
 
-  // Join room for a specific user
-  socket.on('joinRoom', (userId) => {
-    socket.join(userId);
-    console.log(`User ${userId} joined their room`);
+  socket.on('joinRoom', (chatRoomId) => {
+    socket.join(chatRoomId);
+    console.log(`User joined room ${chatRoomId}`);
   });
 
   socket.on('disconnect', () => {
@@ -127,7 +130,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// Start the server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Socket server is running on port ${PORT}`);
