@@ -38,7 +38,7 @@ const creatingChatRoom = tryCatch(async (req, res) => {
   });
 
   if (chatRoom) {
-    const token = jwt.sign({ chatRoomId: chatRoom._id }, process.env.secreteKey, { expiresIn: '1h' });
+    const token = jwt.sign({ chatRoomId: chatRoom._id ,recieverid:anotherUserId}, process.env.secreteKey, { expiresIn: '1h' });
     res.cookie('chatRoomId', token, { httpOnly: true });
     res.status(200).json({
       message: 'Chat room already exists',
@@ -97,16 +97,22 @@ console.log(senderId,messageText)
 
 
 const getMessagesForChat = tryCatch(async (req, res) => {
+
   const token = req.cookies.chatRoomId;
   if (!token) {
     return res.status(401).json({ message: 'No chat room ID found in cookies' });
   }
   const decoded = jwt.verify(token, process.env.secreteKey);
   const chatId = decoded.chatRoomId;
+  const recievId = decoded.recieverid;
+
+  const checkUser = await userModel.findOne({_id:recievId})
+
   const messages = await MessageModel.find({ chatId }).populate('sender');
   res.status(200).json({
     messages,
-    chatId
+    chatId,
+    checkUser
   });
 });
 
