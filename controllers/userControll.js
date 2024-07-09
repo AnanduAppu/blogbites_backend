@@ -278,13 +278,17 @@ const AddImage = tryCatch(async(req,res)=>{
 //send userdata when browser get reload 
 const userAccess = tryCatch(async(req,res)=>{
 
-  const Useremail  = req.body.email;
+  //const Useremail  = req.body.email;
+
+  const token = req.cookies.userToken;
+  const decoded = jwt.verify(token, process.env.secreteKey);
+  const Useremail = decoded.id;
 
   const existingUser = await userModel
   .findOne({ email: Useremail })
   .populate('you_followed')
   .populate('followed');
-  const token = req.cookies.userToken;
+
 
 
 
@@ -462,7 +466,7 @@ const selectedBlog = tryCatch(async(req,res)=>{
   const BlogId = req.query.blogId;
   
  
-  const existingBlog = await BlogModel.findOne({_id:BlogId})
+  const existingBlog = await BlogModel.findOne({_id:BlogId}).populate('author')
 
 
   if (! existingBlog) {
@@ -480,7 +484,9 @@ const selectedBlog = tryCatch(async(req,res)=>{
 //list all blogs of loged user
 const userBlogListing = tryCatch(async(req,res)=>{
 
-  const Useremail  = req.body.email;
+  const token = req.cookies.userToken;
+  const decoded = jwt.verify(token, process.env.secreteKey);
+  const Useremail = decoded.id;
   
   const existingUser = await userModel.findOne({email:Useremail}).populate('your_blogs');
 
@@ -704,7 +710,10 @@ const serachFriend = tryCatch(async(req,res)=>{
 //loged user viewing his/her liked blog details
 const LikedBlogUser = tryCatch(async(req,res)=>{
 
-  const Useremail = req.query.q; // Retrieve userid from headers
+ 
+  const token = req.cookies.userToken;
+  const decoded = jwt.verify(token, process.env.secreteKey);
+  const Useremail = decoded.id; // Retrieve userid from headers
 
   const existingUser = await userModel.findOne({email:Useremail}).populate('likedBlogs').populate('saved_blogs');;
 
