@@ -1,6 +1,6 @@
 const userModel = require('../Schema/users')
 const BlogModel = require('../Schema/blogs')
-const { tryCatch } = require("../middleWares/trycatch");
+const { tryCatch } = require("../middlewares/trycatch");
 const bycrypt =require("bcrypt");
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
@@ -398,32 +398,6 @@ const CreateblogPost = tryCatch(async (req, res) => {
 
 //list all blog posts
 
-
-// const blogListing = tryCatch(async (req, res) => {
-//   const topic = req.query.id;
-
-//   let bloglist;
-
-//   if (topic === 'all') {
-//     bloglist = await BlogModel.find({ visibility: true })
-//       .populate('author')
-//       .populate('likes');
-//   } else {
-//     let top = topic.toLowerCase();
-
-//     bloglist = await BlogModel.find({ topic: new RegExp(`^${top}$`, 'i'), visibility: true })
-//       .populate('author')
-//       .populate('likes');
-//   }
-
-//   const result = bloglist.reverse();
-//   res.status(200).json({
-//     blogs: result,
-//     success: true,
-//   });
-// });
-
-
 const blogListing = tryCatch(async (req, res) => {
   const topic = req.query.id;
   const page = parseInt(req.query.page) || 1;
@@ -447,7 +421,7 @@ const blogListing = tryCatch(async (req, res) => {
       .limit(limit);
   }
 
-  const result = bloglist.reverse();
+  const result = bloglist.reverse()
 
   res.status(200).json({
     blogs: result,

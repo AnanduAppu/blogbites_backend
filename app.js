@@ -1,9 +1,5 @@
 const express = require("express");
-const http = require("http"); // Add this line
-const { Server } = require("socket.io"); // Correctly import socket.io
-
 const app = express();
-
 const cookies = require("cookie-parser");
 const cors = require("cors");
 const errorhandler = require("./middlewares/errorhandler");
@@ -26,8 +22,8 @@ app.use("/user", routeUser);
 const routerChat = require("./Routes/chatRoutes");
 app.use("/chat", routerChat); // Change path to avoid conflict
 
-// Create HTTP server
-const server = http.createServer(app);
+
+
 
 
 app.use(errorhandler);
