@@ -136,7 +136,14 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3500;
+const PORT = process.env.PORT || 3557;
 server.listen(PORT, () => {
   console.log(`Socket server is running on port ${PORT}`);
+});
+
+process.on('SIGINT', () => {
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
 });
