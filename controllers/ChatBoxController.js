@@ -136,7 +136,7 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3557;
+const PORT = process.env.chatPort || 3557;
 server.listen(PORT, () => {
   console.log(`Socket server is running on port ${PORT}`);
 });

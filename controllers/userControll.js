@@ -21,7 +21,7 @@ const transporter = nodemailer.createTransport({
 //*signup section
 //when click signup this code will work for creating otp and send to your mail
 const otpSignup= tryCatch(async(req,res)=>{
-    console.log("annadu")
+   
     const userEmail = req.body.email;
 
     console.log(userEmail)
