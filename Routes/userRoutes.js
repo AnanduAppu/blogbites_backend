@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express();
 const userControl = require('../controllers/userControll')
+const {userAuth} =require("../middleWares/userAuth")
 
 router.route("/signupOtp").post(userControl.otpSignup);
 router.route("/usercreate").post(userControl.createUsers);
