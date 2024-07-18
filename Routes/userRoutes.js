@@ -9,6 +9,7 @@ router.route("/userinterst").post(userControl.interestedTopic);
 router.route("/userimage").post(userControl.AddImage);
 router.route("/defaultimg").get(userControl.defaultImage);
 
+router.route("/userAuth").get(userAuth);
 router.route("/userlogin").post(userControl.loginUser);
 router.route("/authlogin").post(userControl.AuthLogin);
 router.route("/varifyemail").post(userControl.emailverify);
