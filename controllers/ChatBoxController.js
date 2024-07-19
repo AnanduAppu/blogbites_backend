@@ -5,7 +5,7 @@ const socketIO = require('socket.io');
 const userModel = require('../Schema/users');
 const ChatModel = require('../Schema/ChatRoom');
 const MessageModel = require('../Schema/messageSchema');
-const { tryCatch } = require('../middleWares/trycatch');
+const { tryCatch } = require('../middlewares/trycatch');
 const cookieParser = require('cookie-parser');
 
 const app = express();
