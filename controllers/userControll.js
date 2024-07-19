@@ -146,7 +146,11 @@ const loginUser = tryCatch(async(req,res)=>{
 
   const aboutUser = jwt.sign({id},process.env.secreteKey)
 
-  res.cookie("userToken", aboutUser); 
+  res.cookie("userToken", aboutUser, {
+    httpOnly: true,
+    secure: true, // Ensure the cookie is only sent over HTTPS
+
+  }); 
 
 
   res.status(200).json({message:"login successfull",success:true})
@@ -168,7 +172,10 @@ const id = userData.email
 console.log(id)
 const aboutUser = jwt.sign(id,process.env.secreteKey)
 
-res.cookie("userToken", aboutUser); 
+res.cookie("userToken", aboutUser, {
+  httpOnly: true,
+  secure: true, // Ensure the cookie is only sent over HTTPS
+}); 
 
 
 res.status(200).json({message:"login successfull",success:true})
