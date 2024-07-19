@@ -148,15 +148,14 @@ const loginUser = tryCatch(async(req,res)=>{
     expiresIn: '1d' // set expiration time to 1 day
   })
 
-  const isProduction = process.env.NODE_ENV === 'production';
+
 
   res.cookie("userToken", aboutUser, {
     httpOnly: true,
     secure: isProduction, // Use secure cookies in production
     maxAge: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
-    sameSite: isProduction ? 'None' : 'Lax', // Use 'None' for cross-site cookies in production
     domain:'http://localhost:5173', // Set your domain
-    path: '/'
+ 
   }); 
 
 
