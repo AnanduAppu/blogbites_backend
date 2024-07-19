@@ -144,7 +144,9 @@ const loginUser = tryCatch(async(req,res)=>{
 
   const id = userData.email
 
-  const aboutUser = jwt.sign({id},process.env.secreteKey)
+  const aboutUser = jwt.sign({id},process.env.secreteKey,{
+    expiresIn: '1d' // set expiration time to 1 day
+  })
 
   res.cookie("userToken", aboutUser, {
     httpOnly: true,
