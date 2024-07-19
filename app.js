@@ -20,8 +20,7 @@ app.use("/user", routeUser);
 
 // Chat area
 const routerChat = require("./Routes/chatRoutes");
-app.use("/chat", routerChat); // Change path to avoid conflict
-
+app.use("/chat", routerChat); 
 
 
 
