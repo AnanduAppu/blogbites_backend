@@ -148,7 +148,8 @@ const loginUser = tryCatch(async(req,res)=>{
 
   res.cookie("userToken", aboutUser, {
     httpOnly: true,
-    secure: true, // Ensure the cookie is only sent over HTTPS
+    secure: true,
+    maxAge: 24 * 60 * 60 * 1000 
 
   }); 
 

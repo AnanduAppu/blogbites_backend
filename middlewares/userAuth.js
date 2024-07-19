@@ -2,6 +2,7 @@
 const userAuth = (req,res)=>{
     const token = req.cookies.userToken;
 
+
     if(!token){
         res.status(401).send("Unauthorised Access");
     } else {
@@ -9,6 +10,8 @@ const userAuth = (req,res)=>{
         return res.status(200).json({
             message: "successful authication",
             success: true
+
+
           });
       }
 };
