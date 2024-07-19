@@ -145,17 +145,14 @@ const loginUser = tryCatch(async(req,res)=>{
   const id = userData.email
 
   const aboutUser = jwt.sign({id},process.env.secreteKey,{
-    expiresIn: '1d' // set expiration time to 1 day
+    expiresIn: '1d'
   })
-
-
 
   res.cookie("userToken", aboutUser, {
     httpOnly: true,
-    secure: isProduction, // Use secure cookies in production
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
-    domain:'http://localhost:5173', // Set your domain
- 
+    secure: true,
+    maxAge: 24 * 60 * 60 * 1000 
+
   }); 
 
 
