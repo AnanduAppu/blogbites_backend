@@ -417,7 +417,7 @@ const blogListing = tryCatch(async (req, res) => {
   const topic = req.query.id;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 4;
-  var result=[];
+
   let bloglist;
 
   if (topic === 'all') {
@@ -425,8 +425,8 @@ const blogListing = tryCatch(async (req, res) => {
       .populate('author')
       .populate('likes')
       .skip((page - 1) * limit)
-      .limit(limit);
-      result = bloglist.reverse()
+      .limit(limit)
+      .sort({ createdAt: -1 });
   } else {
     let top = topic.toLowerCase();
 
@@ -434,11 +434,11 @@ const blogListing = tryCatch(async (req, res) => {
       .populate('author')
       .populate('likes')
       .skip((page - 1) * limit)
-      .limit(limit);
-       result = bloglist.reverse()
+      .limit(limit)
+      .sort({ createdAt: -1 });
   }
 
-  
+  const result = bloglist
 
   res.status(200).json({
     blogs: result,
