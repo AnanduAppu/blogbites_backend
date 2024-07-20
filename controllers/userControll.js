@@ -255,8 +255,12 @@ console.log("we are completed user verification");
 //logout the user 
 const logOut = tryCatch(async (req, res) => {
  
-  res.clearCookie("userToken")
-
+  res.clearCookie("userToken",{
+    httpOnly: true,
+    secure: 'production',
+    sameSite:  'None' 
+  
+  })
 
   res.status(200).json({ message: 'Logout successful',success:true });
 });
