@@ -150,7 +150,8 @@ const loginUser = tryCatch(async(req,res)=>{
 
   res.cookie("userToken", aboutUser, {
     httpOnly: true,
-    secure: true,
+    secure: 'production',
+    sameSite:  'None' ,
     maxAge: 24 * 60 * 60 * 1000 
 
   }); 
