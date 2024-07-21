@@ -173,7 +173,7 @@ const AuthLogin = tryCatch(async(req,res)=>{
 
 
 const id = userData.email
-console.log(id)
+
 const aboutUser = jwt.sign(id,process.env.secreteKey)
 
 res.cookie("userToken", aboutUser, {

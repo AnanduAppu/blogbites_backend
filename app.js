@@ -18,6 +18,11 @@ app.use(
 const routeUser = require("./Routes/userRoutes");
 app.use("/user", routeUser);
 
+
+// User area
+const routeActivity = require("./Routes/ActivityRouter");
+app.use("/actvity", routeActivity);
+
 // Chat area
 const routerChat = require("./Routes/chatRoutes");
 app.use("/chat", routerChat); 
