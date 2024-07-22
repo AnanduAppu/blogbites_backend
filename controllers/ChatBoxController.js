@@ -61,7 +61,13 @@ const creatingChatRoom = tryCatch(async (req, res) => {
       isGroup: false,
     });
     const token = jwt.sign({ chatRoomId: newChatRoom._id }, process.env.secreteKey, { expiresIn: '1h' });
-    res.cookie('chatRoomId', token, { httpOnly: true });
+    res.cookie('chatRoomId', token, {
+      httpOnly: true,
+      secure: 'production',
+      sameSite:  'None' ,
+      maxAge: 24 * 60 * 60 * 1000 
+  
+    });
     res.status(201).json({
       message: 'New chat room created',
       success: true,
