@@ -27,8 +27,8 @@ const routeActivity = require("./Routes/ActivityRouter");
 app.use("/actvity", routeActivity);
 
 // Chat area
-const routerChat = require("./Routes/chatRoutes");
-app.use("/chat", routerChat); 
+// const routerChat = require("./Routes/chatRoutes");
+// app.use("/chat", routerChat); 
 
 
 
