@@ -512,7 +512,7 @@ const selectedBlog = tryCatch(async(req,res)=>{
   const BlogId = req.query.blogId;
   
  
-  const existingBlog = await BlogModel.findOne({_id:BlogId}).populate('author')
+  const existingBlog = await BlogModel.findOne({_id:BlogId}).populate('author').populate('likes')
 
 
   if (! existingBlog) {
