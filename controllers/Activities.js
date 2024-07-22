@@ -54,7 +54,7 @@ const like_A_Post = tryCatch(async(req,res)=>{
             blog: blogid
           });
       
-          if (!existingNotification) {
+          if (!existingNotification && blogPost.author.toString() !== userId) {
             // Create a new notification if it does not exist
             const notification = new notificationModel({
               user: blogPost.author,  
@@ -164,7 +164,7 @@ const followAndUnfollow = tryCatch(async(req,res)=>{
   
     //another user here logeduserId following
   const {anotheruserId,logeduserId} = req.body
-  
+  console.log(anotheruserId)
   const existAnotherUser= await userModel.findOne({_id:anotheruserId})
   const existLogedUser = await userModel.findOne({_id:logeduserId})
   
@@ -183,7 +183,7 @@ const followAndUnfollow = tryCatch(async(req,res)=>{
         // If user already in anotheruser follwed array, remove the user ID to the follwed array
         await userModel.updateOne({ _id: anotheruserId }, { $pull: { followed: existLogedUser._id } });
         await userModel.updateOne({ _id: logeduserId }, { $pull: {you_followed: existAnotherUser._id } });
-        const userData= await userModel.findOne({_id:anotheruserId}).populate('your_blogs').populate('you_followed').populate('followed')
+       
 
         await notificationModel.deleteOne({
           user: anotheruserId,
@@ -191,6 +191,8 @@ const followAndUnfollow = tryCatch(async(req,res)=>{
           type: "follow",
           
         });
+
+        const userData= await userModel.findOne({_id:anotheruserId}).populate('your_blogs').populate('you_followed').populate('followed')
   
         res.status(200).json({
           message:"you unfollowed ",
@@ -233,7 +235,7 @@ const followAndUnfollow = tryCatch(async(req,res)=>{
         .populate('fromUser') 
         .populate('blog') 
         .sort({ createdAt: -1 }); // Sort by creation date, most recent first
-        console.log(notifications)
+      
     if (!notifications) {
         return res.status(404).json({
             message: "No notifications found",
@@ -250,11 +252,42 @@ const followAndUnfollow = tryCatch(async(req,res)=>{
   })
 
 
+  const notificationSeen = tryCatch(async(req,res)=>{
+    const { userId, notificationId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        message: "User ID is required",
+        success: false,
+      });
+    }
+
+    if (!notificationId) {
+      return res.status(400).json({
+        message: "Notification ID is required",
+        success: false,
+      });
+    }
+
+  const result = await notificationModel.updateOne(
+      { _id: notificationId, user: userId, isRead: false },
+      { $set: { isRead: true } }
+    );
+
+    res.status(200).json({
+      message: "Notifications marked as read",
+      success: true,
+      updatedCount: result.nModified,
+    });
+  })
+
+
   module.exports = {
     followAndUnfollow,
     like_A_Post,
     post_A_comment,
     Save_A_Blog,
-    displayNotification
+    displayNotification,
+    notificationSeen 
   };
   

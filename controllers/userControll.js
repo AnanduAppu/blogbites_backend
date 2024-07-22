@@ -50,7 +50,13 @@ const otpSignup= tryCatch(async(req,res)=>{
         console.log(error);
         return res.status(500).send('Failed to send verification code');
       }
-      res.cookie("Otptoken", otpToken); // Store the verification code in a cookie
+      res.cookie("Otptoken", otpToken,{
+        httpOnly: true,
+        secure: 'production',
+        sameSite:  'None' ,
+        maxAge: 24 * 60 * 60 * 1000 
+    
+      }); // Store the verification code in a cookie
       res.status(200).json({ message: 'OTP sent successfully', success: true });
     });
 })
@@ -58,22 +64,57 @@ const otpSignup= tryCatch(async(req,res)=>{
 
 //verify the otp from email after signup , then creating user
 const createUsers = tryCatch(async(req,res)=>{
- 
-    const userSave = await userModel.create(req.body);
 
+
+  const { userDataFromSignup, otp } = req.body;
+
+
+console.log(userDataFromSignup)
+  // Retrieve token from cookies
+  const token = req.cookies.Otptoken;
+
+  if (!token) {
+    return res.status(400).json({ message: "OTP token not found", success: false });
+  }
+
+
+    // Verify JWT token
+    const decoded = jwt.verify(token, process.env.secreteKey);
+
+    // Check if the provided OTP matches the decoded OTP
+    if (otp === decoded) {
+      // Create user
+      const userSave = await userModel.create(userDataFromSignup);
+
+      // Generate email token for further verification
+      const emailToken = jwt.sign({ mail: userSave.email }, process.env.secreteKey, {
+        expiresIn: '1d', // 1 day expiration
+      });
+
+      // Set the email token in a cookie
+      res.cookie("emailToken", emailToken, {
+        httpOnly: true,
+        secure: 'production', 
+        sameSite: 'None',
+        maxAge: 24 * 60 * 60 * 1000, 
+      });
+
+      return res.status(200).json({ message: "Your account was created", success: true });
+    } else {
+      return res.status(400).json({ message: "Invalid OTP", success: false });
+    }
   
-    const emailToken = jwt.sign({mail:userSave.email},process.env.secreteKey)
-
-    res.cookie("emailToken", emailToken); // Store the verification code in a cookie
-    res.status(200).json({ message: "your account created", success: true });
 
 })
 
 
 // after creating user , user select his interested topic
 const interestedTopic = tryCatch(async(req,res)=>{
-  const {selectedInterests,email} = req.body
+  const {selectedInterests} = req.body
 
+  const token = req.cookies.emailToken;
+  const decoded = jwt.verify(token, process.env.secreteKey);
+  const email = decoded.mail;
 
   const userData = await userModel.findOne({ email: email });
   if(!userData){
@@ -178,7 +219,10 @@ const aboutUser = jwt.sign(id,process.env.secreteKey)
 
 res.cookie("userToken", aboutUser, {
   httpOnly: true,
-  secure: true, // Ensure the cookie is only sent over HTTPS
+  secure: 'production',
+  sameSite:  'None' ,
+  maxAge: 24 * 60 * 60 * 1000 
+
 }); 
 
 
@@ -217,7 +261,13 @@ const emailverify = tryCatch(async(req,res)=>{
         console.log(error);
         return res.status(500).send('Failed to send verification code');
       }
-      res.cookie("OtpPass", otpToken); // Store the verification code in a cookie
+      res.cookie("OtpPass", otpToken,{
+        httpOnly: true,
+        secure: 'production',
+        sameSite:  'None' ,
+        maxAge: 24 * 60 * 60 * 1000 
+    
+      }); // Store the verification code in a cookie
       res.status(200).json({ message: 'OTP sent successfully', success: true });
     });
 })
@@ -268,8 +318,13 @@ const logOut = tryCatch(async (req, res) => {
 //profile image update
 const AddImage = tryCatch(async(req,res)=>{
 
-  const {email,imageUrl} = req.body
+  const {imageUrl} = req.body
  
+  const token = req.cookies.emailToken;
+  const decoded = jwt.verify(token, process.env.secreteKey);
+  const email = decoded.mail;
+
+
   const existingUser = await userModel.findOne({email:email});
 
   if(!existingUser  ){
@@ -584,96 +639,6 @@ const isVisibility = tryCatch(async(req,res)=>{
 
 //*social media activities
 
-//like a post 
-const like_A_Post = tryCatch(async(req,res)=>{
-
-  const {userId, blogid} = req.body;
-
-    // Find the existing user
-    const existingUser = await userModel.findOne({_id:userId});
-    if (!existingUser) {
-      return res.status(400).json({
-        message: "User not found",
-        success: false
-      });
-    }
-
-    // Find the blog post
-    const blogPost = await BlogModel.findOne({_id:blogid});
-    if (!blogPost) {
-      return res.status(400).json({
-        message: "Blog post not found",
-        success: false
-      });
-    }
-   
-    // Check if the user's ID is already in the likes array
-    const isLiked = blogPost.likes.includes(existingUser._id);
-    
-    if (isLiked) {
-      // If user already liked, remove the user ID from the likes array
-      await BlogModel.updateOne({ _id: blogid }, { $pull: { likes: existingUser._id } });
-      await userModel.updateOne({ _id: userId }, { $pull: { likedBlogs: blogPost._id } });
-    } else {
-      // If user hasn't liked, add the user ID to the likes array
-      await BlogModel.updateOne({ _id: blogid }, { $push: { likes: existingUser._id } });
-      await userModel.updateOne({ _id: userId }, { $push: { likedBlogs: blogPost._id } });
-    }
-
-    res.status(200).json({ 
-      message: "Post liked",
-      success: true,
-     
-    });
-
-});
-
-
-
-
-//save a blog
-const Save_A_Blog = tryCatch(async (req, res) => {
-  const { userId, blogid } = req.body;
-
-  // Find the existing user
-  const existingUser = await userModel.findOne({ _id: userId });
-  if (!existingUser) {
-    return res.status(400).json({
-      message: "User not found",
-      success: false,
-    });
-  }
-
-  // Find the blog post
-  const blogPost = await BlogModel.findOne({ _id: blogid });
-  if (!blogPost) {
-    return res.status(400).json({
-      message: "Blog post not found",
-      success: false,
-    });
-  }
-
-  console.log('we are in saved blogs', userId);
-  // Check if the user's ID is already in the saved_blogs array
-  const isSaved = existingUser.saved_blogs.includes(blogPost._id);
-  console.log(existingUser);
-  if (isSaved) {
-    // If user already saved the blog, remove the blog ID from the saved_blogs array
-    await userModel.updateOne({ _id: userId }, { $pull: { saved_blogs: blogPost._id } });
-  } else {
-    // If user hasn't saved the blog, add the blog ID to the saved_blogs array
-    await userModel.updateOne({ _id: userId }, { $push: { saved_blogs: blogPost._id } });
-  }
-
-  res.status(200).json({
-    message: "Blog saved status updated",
-    success: true,
-  });
-});
-
-
-
-
 //Search a friend 
 
 const serachFriend = tryCatch(async(req,res)=>{
@@ -691,10 +656,6 @@ const serachFriend = tryCatch(async(req,res)=>{
 
   res.status(200).json({friends})
 })
-
-
-
-
 
 
 
@@ -784,36 +745,7 @@ const SavedBlogListing = tryCatch(async(req,res)=>{
 })
 
 
-//comment a post
-const post_A_comment = tryCatch(async(req,res)=>{
-  const {userId, blogid, comment} = req.body;
-  console.log( req.body)
-  const existUser = await userModel.findOne({_id:userId})
-  const existBlog = await BlogModel.findOne({_id:blogid})
 
-
-  if(!existUser || !existBlog){
-    return res.status(400).json({
-      message: "User or blog not found",
-      success:false
-    })
-  }
- const addComment = await commentModel.create({
-  whichBlog: blogid,
-  commentPerson: userId,
-  comment: comment,
- })
-
- existBlog.comments.push(addComment._id);
-
- await existBlog.save()
-
- res.status(200).json({
-  message:"you commented",
-  success:true
- })
-
-})
 
 //display the comments
 const showComments = tryCatch(async(req,res)=>{
@@ -885,56 +817,6 @@ res.status(200).json({
 })
 
 
-
-
-//follow another user
-const followAndUnfollow = tryCatch(async(req,res)=>{
-  
-  //another user here logeduserId following
-const {anotheruserId,logeduserId} = req.body
-
-const existAnotherUser= await userModel.findOne({_id:anotheruserId})
-const existLogedUser = await userModel.findOne({_id:logeduserId})
-
-
-if(!existAnotherUser || !existLogedUser){
-  return res.status(200).json({
-    message:"user not exist"
-  })
-}
-
-    // Check if the user's ID is already in the followed array
-    const isfollowed = existAnotherUser.followed.includes(existLogedUser._id);
-
-    
-    if (isfollowed) {
-      // If user already in anotheruser follwed array, remove the user ID to the follwed array
-      await userModel.updateOne({ _id: anotheruserId }, { $pull: { followed: existLogedUser._id } });
-      await userModel.updateOne({ _id: logeduserId }, { $pull: {you_followed: existAnotherUser._id } });
-      const userData= await userModel.findOne({_id:anotheruserId}).populate('your_blogs').populate('you_followed').populate('followed')
-
-      res.status(200).json({
-        message:"you unfollowed ",
-        success:true,
-        Data:userData
-        
-      })
-    } else {
-      // If user hasn't anotheruser follwed array, add the user ID to the follwed array
-     
-      await userModel.updateOne({ _id: anotheruserId }, { $push: { followed: existLogedUser._id } });
-      await userModel.updateOne({ _id: logeduserId }, { $push: {you_followed: existAnotherUser._id } });
-      const userData= await userModel.findOne({_id:anotheruserId}).populate('your_blogs').populate('you_followed').populate('followed')
-      res.status(200).json({
-        message:"you followed ",
-        success:true,
-        Data:userData
-      })
-    }
-
-})
-
-
 //save a post 
 
 
@@ -955,16 +837,16 @@ module.exports={
     walimage,//background image update
     userBlogListing,// taking loged user blog data
     selectedBlog,// viewing particular blog 
-    like_A_Post,// like and unlike a post
-    post_A_comment,//post a new comment
+
+
     showComments,//show all comments of respective blog
-    followAndUnfollow ,// follow and and unfollow a user
+
     LikedBlogUser,//viewing liked blogs
     SavedBlogUser,//viewing saved blogs
     fetchAnotherUser,// taking data of another users
     fetchAnotherUserBlogs,// takw another user blogs
     serachFriend,//search friends
-    Save_A_Blog,//blog saving
+
     SavedBlogListing,//saved blog listing
     isVisibility ,// making your public/private
     deleteMyBlog,// delete the blog from user profile
