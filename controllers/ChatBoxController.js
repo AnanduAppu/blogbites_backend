@@ -12,10 +12,13 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
+const local="http://localhost:5173"
+const livedom = "https://blogbites.vercel.app";
+
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
-    origin: 'http://localhost:5173', // Adjust to your React app's URL
+    origin: livedom, // Adjust to your React app's URL
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type'],
     credentials: true, // Allow credentials
