@@ -7,9 +7,11 @@ const errorhandler = require("./middlewares/errorhandler");
 app.use(express.json());
 app.use(cookies());
 
+const local="http://localhost:5173"
+const livedom="https://blogbites.vercel.app"
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: livedom,
     credentials: true,
   })
 );
