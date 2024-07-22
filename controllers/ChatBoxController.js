@@ -43,7 +43,13 @@ const creatingChatRoom = tryCatch(async (req, res) => {
 
   if (chatRoom) {
     const token = jwt.sign({ chatRoomId: chatRoom._id, recieverid: anotherUserId }, process.env.secreteKey, { expiresIn: '1h' });
-    res.cookie('chatRoomId', token, { httpOnly: true });
+    res.cookie('chatRoomId', token, {
+      httpOnly: true,
+      secure: 'production',
+      sameSite:  'None' ,
+      maxAge: 24 * 60 * 60 * 1000 
+  
+    });
     res.status(200).json({
       message: 'Chat room already exists',
       success: true,
