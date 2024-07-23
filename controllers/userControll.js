@@ -212,18 +212,18 @@ const AuthLogin = tryCatch(async(req,res)=>{
     return res.status(404).json({ message: "User not found", success: false });
   }
 
+  const id = userData.email
+  const aboutUser = jwt.sign({id},process.env.secreteKey,{
+    expiresIn: '1d'
+  })
 
-const id = userData.email
+  res.cookie("userToken", aboutUser, {
+    httpOnly: true,
+    secure: 'production',
+    sameSite:  'None' ,
+    maxAge: 24 * 60 * 60 * 1000 
 
-const aboutUser = jwt.sign(id,process.env.secreteKey)
-
-res.cookie("userToken", aboutUser, {
-  httpOnly: true,
-  secure: 'production',
-  sameSite:  'None' ,
-  maxAge: 24 * 60 * 60 * 1000 
-
-}); 
+  });
 
 
 res.status(200).json({message:"login successfull",success:true})
