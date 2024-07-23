@@ -273,11 +273,31 @@ const emailverify = tryCatch(async(req,res)=>{
 })
 
 
+const verifyOtpforResetPassword=tryCatch(async(req,res)=>{
+  const { otpinput } = req.body;
+  const token = req.cookies.OtpPass;
+  const decoded = jwt.verify(token, process.env.secreteKey);
+
+  if (otpinput !== decoded) {
+    return res.status(400).json({ message: "OTP verification failed", success: false });
+  }
+  res.clearCookie("OtpPass",{
+    httpOnly: true,
+    secure: 'production',
+    sameSite:  'None' 
+  
+  })
+
+
+  res.status(200).json({ message: "OTP successfully verified", success: true });
+ 
+})
+
 //new password saving to backend
 const setNewpassword = tryCatch(async(req,res)=>{
 
   const {userEmail,newPassword } = req.body;
-console.log(userEmail)
+
   const hashedPassword = await bycrypt.hash(newPassword, 10);
   console.log(hashedPassword);
   const userEmailData = await userModel.findOne({email:userEmail})
@@ -826,7 +846,7 @@ module.exports={
     interestedTopic,
     AddImage,
     defaultImage,
-    
+    verifyOtpforResetPassword,
 
     userAccess , //take data in every reload
     userEdit,//edit user data

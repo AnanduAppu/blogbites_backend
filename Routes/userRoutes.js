@@ -13,6 +13,7 @@ router.route("/userAuth").get(userAuth);
 router.route("/userlogin").post(userControl.loginUser);
 router.route("/authlogin").post(userControl.AuthLogin);
 router.route("/varifyemail").post(userControl.emailverify);
+router.route("/passotpverify").post(userControl.verifyOtpforResetPassword);
 router.route("/setnewpassword").post(userControl.setNewpassword);
 
 
