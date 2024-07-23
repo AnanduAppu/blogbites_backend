@@ -8,7 +8,7 @@ app.use(express.json());
 app.use(cookies());
 
 const local="http://localhost:5173"
-const livedom = "https://blogbites.vercel.app";
+const livedom = "https://www.blogbites.online";
 
 app.use(
   cors({
